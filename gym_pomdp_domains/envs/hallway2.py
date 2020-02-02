@@ -10,6 +10,7 @@ import gym
 from gym import spaces
 import numpy as np
 from random import choice, uniform
+from PIL import Image, ImageDraw
 
 class Hallway2(gym.Env):
   metadata = {'render.modes': ['human']}
@@ -203,9 +204,83 @@ class Hallway2(gym.Env):
     self.num_steps = 0
     return self.get_observation(self.state)
 
-  def render(self, mode='human', close=False):
+  def render(self, mode='human'):
     '''
-        An arrow marks the current agent position.
+        A blue circle marks the current agent position.
+        A white circle marks the current agent orientation.
+        The goal state is colored in bright green.
     '''
-    # TODO
+    if mode == "human":
+        square_size = 30
+        height = 7 * square_size + 10
+        width = 5 * square_size + 10
+        
+        # for drawing the agent orientation
+        offsets = [[0.4, 0.1], [0.7, 0.4], [0.4, 0.7], [0.1, 0.4]]
+        dot_width = 0.2
+        
+        # map grid locations to squares in plot
+        mapping = [1, 2, 3, 4, 5, 7, 8, 10, 12, 13,
+                   15, 17, 19,
+                   21, 22, 24, 26, 27,
+                   29, 30, 31, 32, 33]
+        
+        color_fill = "#FFFFBF" # color for non-goal squares
+        agent_color = "blue"
+        color_goal = "#33CC00"
+        orientation_color = "white"
+        
+        if self.state <= 68:
+            index = int(np.floor(self.state/4))
+            rem = int(self.state % 4)
+        else:
+            index = int(np.floor((self.state + 3)/4))
+            rem = int((self.state + 3) % 4)
+        
+        mapped_row = np.floor(mapping[index] / 7)
+       
+        image = Image.new("RGB", size=(height, width), color="#FFFFFF")
     
+        draw = ImageDraw.Draw(image)
+       
+        # first and last row of squares
+        for j in [0, 4]:
+            for i in range(1, 6):
+                shape = [(i * square_size, j * square_size), ((i+1) * square_size, (j+1) * square_size)] 
+                draw.rectangle(shape, fill = color_fill, outline ="black") 
+        
+        # third row
+        for i in [1, 3, 5]:
+            shape = [(i * square_size, 2 * square_size), ((i+1) * square_size, 3 * square_size)] 
+            draw.rectangle(shape, fill = color_fill, outline ="black") 
+            
+        # 2nd and 4th row
+        for j in [1, 3]:
+            color_fill = "#FFFFBF"
+            for i in [0, 1, 3, 5, 6]:
+                if i == 6 and j == 3:
+                    color_fill = color_goal
+                shape = [(i * square_size, j * square_size), ((i+1) * square_size, (j+1) * square_size)] 
+                draw.rectangle(shape, fill = color_fill, outline = "black") 
+                
+        
+        # draw location of agent
+        draw.ellipse(((mapping[index] - mapped_row * 7) * square_size, 
+                      mapped_row * square_size, 
+                      (mapping[index] + 1 - mapped_row * 7) * square_size, 
+                      square_size * (mapped_row + 1)), 
+                     fill = agent_color, outline = agent_color)
+        
+        if not self.state == 68:
+            # draw orientation of agent
+            draw.ellipse(((mapping[index] - mapped_row * 7 + offsets[rem][0]) * square_size, 
+                          (offsets[rem][1] + mapped_row) * square_size, 
+                          (mapping[index] + offsets[rem][0] + dot_width - mapped_row * 7) * square_size, 
+                          (offsets[rem][1] + dot_width + mapped_row) * square_size), 
+                         fill = orientation_color, outline = 'black')
+       
+        del draw
+        image.show()
+    
+    else:
+        print("Current state:", self.state)

@@ -200,7 +200,9 @@ class Hallway(gym.Env):
 
   def render(self, mode='human'):
     '''
-        An arrow marks the current agent position.
+        A blue circle marks the current agent position.
+        A white circle marks the current agent orientation.
+        The goal state is colored in bright green.
     '''
     
     if mode == "human":
