@@ -256,12 +256,12 @@ class Hallway2(gym.Env):
             
         # 2nd and 4th row
         for j in [1, 3]:
-            color_fill = "#FFFFBF"
+            color = color_fill
             for i in [0, 1, 3, 5, 6]:
                 if i == 6 and j == 3:
-                    color_fill = color_goal
+                    color = color_goal
                 shape = [(i * square_size, j * square_size), ((i+1) * square_size, (j+1) * square_size)] 
-                draw.rectangle(shape, fill = color_fill, outline = "black") 
+                draw.rectangle(shape, fill = color, outline = "black") 
                 
         
         # draw location of agent

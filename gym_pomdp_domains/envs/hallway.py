@@ -207,8 +207,18 @@ class Hallway(gym.Env):
     
     if mode == "human":
         square_size = 30
-        height = 340
-        width = 70
+        height = 11 * square_size + 10
+        width = 2 * square_size + 10
+        
+        offsets = [[0.4, 0.1], [0.7, 0.4], [0.4, 0.7], [0.1, 0.4]]
+        dot_width = 0.2
+        
+        mapping = [0, 1, 2, 13, 3, 4, 15, 5, 6, 17, 7, 8, 19, 9, 10]
+        
+        color_fill = "#FFFFBF"
+        color_goal = "#33CC00"
+        color_agent = "blue"
+        color_orientation = "white"
         
         if self.state <= 48:
             index = int(np.floor(self.state/4))
@@ -216,53 +226,42 @@ class Hallway(gym.Env):
         else:
             index = int(np.floor((self.state + 3)/4))
             rem = int((self.state + 3) % 4)
-        
-        mapping = [0, 1, 2, 13, 3, 4, 15, 5, 6, 17, 7, 8, 19, 9, 10]
+            
+        mapped_row = np.floor(mapping[index] / 11)
         
         image = Image.new("RGB", size=(height, width), color="#FFFFFF")
     
         draw = ImageDraw.Draw(image)
-        
-        offsets = [[0.4, 0.1], [0.7, 0.4], [0.4, 0.7], [0.1, 0.4]]
-        dot_width = 0.2
        
         # first row of squares
         for i in range(11):
-            color_fill = "#FFFFBF"
             shape = [(i * square_size, 0), ((i+1) * square_size, square_size)] 
             draw.rectangle(shape, fill = color_fill, outline ="black") 
         
         # second row
         for i in range(2, 9, 2):
-            
             # goal state
             if i == 8:
-                color_fill = "#33CC00"
+                color = color_goal
             else:
-                color_fill = "#FFFFBF"
+                color = color_fill
             shape = [(i * square_size, square_size), ((i+1) * square_size, 2 * square_size)] 
-            draw.rectangle(shape, fill = color_fill, outline ="black") 
+            draw.rectangle(shape, fill = color, outline ="black") 
         
-        # draw location and orientation of agent
-        if mapping[index] <= 10:
-            draw.ellipse((mapping[index] * square_size, 0, (mapping[index] + 1) * square_size, square_size), 
-                         fill = 'blue', outline ='blue')
-            
-            draw.ellipse((mapping[index] * square_size + offsets[rem][0] * square_size, 
-                          offsets[rem][1] * square_size, 
-                          mapping[index] * square_size + (offsets[rem][0] + dot_width) * square_size, 
-                          (offsets[rem][1] + dot_width) * square_size), 
-                         fill = 'white', outline ='black')
-            
-        else:
-            draw.ellipse(((mapping[index] - 11)  * square_size, square_size, (mapping[index] - 10) * square_size, 2 * square_size), 
-                         fill = 'blue', outline ='blue')
-            if not self.state == 48:
-                draw.ellipse((mapping[index] * square_size + offsets[rem][0] * square_size, 
-                              (offsets[rem][1] + 1) * square_size, 
-                              mapping[index] * square_size + (offsets[rem][0] + dot_width) * square_size, 
-                              (offsets[rem][1] + dot_width + 1) * square_size), 
-                             fill = 'white', outline ='black')
+        # draw location of agent
+        draw.ellipse(((mapping[index] - mapped_row * 11) * square_size, 
+                      mapped_row * square_size, 
+                      (mapping[index] + 1 - mapped_row * 11) * square_size, 
+                      square_size * (mapped_row + 1)), 
+                     fill = color_agent, outline = color_agent)
+        
+        if not self.state == 48:
+            # draw orientation of agent
+            draw.ellipse(((mapping[index] - mapped_row * 11 + offsets[rem][0]) * square_size, 
+                          (offsets[rem][1] + mapped_row) * square_size, 
+                          (mapping[index] + offsets[rem][0] + dot_width - mapped_row * 11) * square_size, 
+                          (offsets[rem][1] + dot_width + mapped_row) * square_size), 
+                         fill = color_orientation, outline = 'black')
             
         del draw
         image.show()
