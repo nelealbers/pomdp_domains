@@ -12,11 +12,18 @@ import gym
 from gym import spaces
 import numpy as np
 from random import choice, uniform
+from PIL import Image, ImageDraw
 
 class Hallway(gym.Env):
   metadata = {'render.modes': ['human']}
 
-  def __init__(self):
+  def __init__(self, prob_action_success = 0.8, prob_see_wall_true = 0.9,
+               prob_see_wall_false = 0.05):
+    '''
+        prob_action_success: probability of success for all actions but "stay" 
+        prob_see_wall_true: probability to see a wall if a wall is there
+        prob_see_wall_false: probability to see a wall if a wall is not there
+    '''
     self.reward_range = (0, 1)
     self.action_space = spaces.Discrete(5)
     self.observation_space = spaces.Discrete(20)
@@ -25,9 +32,9 @@ class Hallway(gym.Env):
     self.MAX_STEPS = 100 # max. number of steps per episodes
     self.num_steps = 0 # steps taken so far
     
-    self.PROB_ACTION_SUCCESS = 0.8 # probability of success for all actions but "stay" 
-    self.PROB_SEE_WALL_TRUE = 0.9 # probability to see a wall if a wall is there
-    self.PROB_SEE_WALL_FALSE = 0.05 # probability to see a wall if a wall is not there
+    self.PROB_ACTION_SUCCESS = prob_action_success
+    self.PROB_SEE_WALL_TRUE = prob_see_wall_true
+    self.PROB_SEE_WALL_FALSE = prob_see_wall_false
     
     # types of states
     self.TERMINAL_STATES = [48]
@@ -60,16 +67,16 @@ class Hallway(gym.Env):
     # true next states for moving forward
     self.FORWARD_STATE = [0, 5, 2, 3, 
                           4, 9, 6, 3, 
-                          8, 17, 10, 7, 
+                          8, 17, 14, 7, 
                           8, 13, 14, 15,
                           16, 21, 18, 11, 
-                          20, 29, 22, 19, 
+                          20, 29, 26, 19, 
                           20, 25, 26, 27, 
                           28, 33, 30, 23,
-                          32, 41, 34, 31, 
+                          32, 41, 38, 31, 
                           32, 37, 38, 39, 
                           40, 45, 42, 35, 
-                          44, 50, 46, 43, 
+                          44, 50, 48, 43, 
                           48, 
                           49, 54, 51, 47,
                           53, 54, 55, 52]
@@ -128,7 +135,7 @@ class Hallway(gym.Env):
         prob = uniform(0, 1)
         if self.WALLS[s_prime][wall_pos] == 0 and prob < self.PROB_SEE_WALL_FALSE:
             obs[wall_pos] = 1
-        elif self.WALLS[s_prime][wall_pos] == 1 and prob < self.PROB_SEE_WALL_TRUE:
+        elif self.WALLS[s_prime][wall_pos] == 1 and prob <= self.PROB_SEE_WALL_TRUE:
             obs[wall_pos] = 1
     return int(obs[0] * 1 + obs[1] * 2 + obs[2] * 4 + obs[3] * 8)
         
@@ -178,7 +185,7 @@ class Hallway(gym.Env):
     # action is not "stay"
     if action > 0:    
         prob = uniform(0, 1)
-        if prob < self.PROB_ACTION_SUCCESS:
+        if prob <= self.PROB_ACTION_SUCCESS:
             self.state = self.act(self.state, action)
         else:
             self.state = self.act(self.state, choice([i for i in range(self.action_space.n) if not i == action]))      
@@ -191,9 +198,72 @@ class Hallway(gym.Env):
     self.num_steps = 0
     return self.get_observation(self.state)
 
-  def render(self, mode='human', close=False):
+  def render(self, mode='human'):
     '''
         An arrow marks the current agent position.
     '''
-    # TODO
     
+    if mode == "human":
+        square_size = 30
+        height = 340
+        width = 70
+        
+        if self.state <= 48:
+            index = int(np.floor(self.state/4))
+            rem = int(self.state % 4)
+        else:
+            index = int(np.floor((self.state + 3)/4))
+            rem = int((self.state + 3) % 4)
+        
+        mapping = [0, 1, 2, 13, 3, 4, 15, 5, 6, 17, 7, 8, 19, 9, 10]
+        
+        image = Image.new("RGB", size=(height, width), color="#FFFFFF")
+    
+        draw = ImageDraw.Draw(image)
+        
+        offsets = [[0.4, 0.1], [0.7, 0.4], [0.4, 0.7], [0.1, 0.4]]
+        dot_width = 0.2
+       
+        # first row of squares
+        for i in range(11):
+            color_fill = "#FFFFBF"
+            shape = [(i * square_size, 0), ((i+1) * square_size, square_size)] 
+            draw.rectangle(shape, fill = color_fill, outline ="black") 
+        
+        # second row
+        for i in range(2, 9, 2):
+            
+            # goal state
+            if i == 8:
+                color_fill = "#33CC00"
+            else:
+                color_fill = "#FFFFBF"
+            shape = [(i * square_size, square_size), ((i+1) * square_size, 2 * square_size)] 
+            draw.rectangle(shape, fill = color_fill, outline ="black") 
+        
+        # draw location and orientation of agent
+        if mapping[index] <= 10:
+            draw.ellipse((mapping[index] * square_size, 0, (mapping[index] + 1) * square_size, square_size), 
+                         fill = 'blue', outline ='blue')
+            
+            draw.ellipse((mapping[index] * square_size + offsets[rem][0] * square_size, 
+                          offsets[rem][1] * square_size, 
+                          mapping[index] * square_size + (offsets[rem][0] + dot_width) * square_size, 
+                          (offsets[rem][1] + dot_width) * square_size), 
+                         fill = 'white', outline ='black')
+            
+        else:
+            draw.ellipse(((mapping[index] - 11)  * square_size, square_size, (mapping[index] - 10) * square_size, 2 * square_size), 
+                         fill = 'blue', outline ='blue')
+            if not self.state == 48:
+                draw.ellipse((mapping[index] * square_size + offsets[rem][0] * square_size, 
+                              (offsets[rem][1] + 1) * square_size, 
+                              mapping[index] * square_size + (offsets[rem][0] + dot_width) * square_size, 
+                              (offsets[rem][1] + dot_width + 1) * square_size), 
+                             fill = 'white', outline ='black')
+            
+        del draw
+        image.show()
+    
+    else:
+        print("Current state:", self.state)

@@ -14,7 +14,13 @@ from random import choice, uniform
 class Hallway2(gym.Env):
   metadata = {'render.modes': ['human']}
 
-  def __init__(self):
+  def __init__(self, prob_action_success = 0.8, prob_see_wall_true = 0.9,
+               prob_see_wall_false = 0.05):
+    '''
+        prob_action_success: probability of success for all actions but "stay" 
+        prob_see_wall_true: probability to see a wall if a wall is there
+        prob_see_wall_false: probability to see a wall if a wall is not there
+    '''  
     self.reward_range = (0, 1)
     self.action_space = spaces.Discrete(5)
     self.observation_space = spaces.Discrete(17)
@@ -23,9 +29,9 @@ class Hallway2(gym.Env):
     self.MAX_STEPS = 100 # max. number of steps per episodes
     self.num_steps = 0 # steps taken so far
     
-    self.PROB_ACTION_SUCCESS = 0.8 # probability of success for all actions but "stay" 
-    self.PROB_SEE_WALL_TRUE = 0.9 # probability to see a wall if a wall is there
-    self.PROB_SEE_WALL_FALSE = 0.05 # probability to see a wall if a wall is not there
+    self.PROB_ACTION_SUCCESS = prob_action_success
+    self.PROB_SEE_WALL_TRUE = prob_see_wall_true
+    self.PROB_SEE_WALL_FALSE = prob_see_wall_false
     
     # types of states
     self.TERMINAL_STATES = [68]
@@ -71,11 +77,11 @@ class Hallway2(gym.Env):
                           16, 17, 34, 15,
                           20, 25, 22, 23,
                           0, 25, 42, 23,
-                          8, 27, 46, 31,
+                          8, 29, 46, 31,
                           16, 37, 50, 35,
                           36, 37, 38, 35,
                           24, 41, 58, 43,
-                          26, 45, 62, 47, 
+                          28, 45, 62, 47, 
                           32, 49, 66, 51,
                           52, 57, 54, 55,
                           40, 57, 71, 55,
@@ -120,12 +126,12 @@ class Hallway2(gym.Env):
         
   def get_observation(self, s_prime):
     '''
-    Returns observation for arriving in state s_prime.
+    Returns observation for being in state s_prime.
     '''
     
     s_prime = int(s_prime)
     
-    # arrived in goal state
+    # goal state
     if s_prime == 68: 
         return 16
     
