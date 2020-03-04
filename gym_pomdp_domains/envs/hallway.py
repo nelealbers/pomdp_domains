@@ -142,7 +142,6 @@ class Hallway(gym.Env):
     '''
     Returns observation for arriving in state s_prime.
     '''
-        
     s_prime = int(s_prime)
     
     # special observations for facing south in 3 grid positions in second row
