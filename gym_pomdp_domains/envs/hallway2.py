@@ -222,7 +222,7 @@ class Hallway2(gym.Env):
     elif action == 4: # turn around
         if s > 68:
             s -= 1
-        if np.floor(s/4) <= 1: # orientations are up or right
+        if s % 4 <= 1: # orientations are up or right
             s_prime = s + 2
         else:
             s_prime = s - 2
