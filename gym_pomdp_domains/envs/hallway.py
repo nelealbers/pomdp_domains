@@ -7,7 +7,6 @@
     State layout: 0-3, 4-7, 8-11, 16-19, 20-23, 28-31, 32-35, 40-43, 44-47, 49-52, 53-56
                             12-15        24-27         36-39          48
 '''
-
 import gym
 from gym import spaces
 import numpy as np
@@ -230,7 +229,7 @@ class Hallway(gym.Env):
     elif action == 4: # turn around
         if s > 48:
             s -= 1
-        if np.floor(s/4) <= 1: # orientations are up or right
+        if s % 4 <= 1: # orientations are up or right
             s_prime = s + 2
         else:
             s_prime = s - 2
