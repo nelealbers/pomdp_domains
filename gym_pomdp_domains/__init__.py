@@ -14,3 +14,8 @@ register(
     id='Hallway2-v0',
     entry_point='gym_pomdp_domains.envs:Hallway2',
 )
+
+register(
+    id='Hallway2_Simple-v0',
+    entry_point='gym_pomdp_domains.envs:Hallway2_Simple',
+)
