@@ -15,18 +15,19 @@ class Hallway2(gym.Env):
   metadata = {'render.modes': ['human']}
 
   def __init__(self, prob_action_success = 0.8, prob_see_wall_true = 0.9,
-               prob_see_wall_false = 0.05):
+               prob_see_wall_false = 0.05, max_steps = 100):
     '''
         prob_action_success: probability of success for all actions but "stay" 
         prob_see_wall_true: probability to see a wall if a wall is there
         prob_see_wall_false: probability to see a wall if a wall is not there
+        max_steps: max. number of steps per episode
     '''  
     self.reward_range = (0, 1)
     self.action_space = spaces.Discrete(5)
     self.observation_space = spaces.Discrete(17)
     self.state_space = spaces.Discrete(89)
     
-    self.MAX_STEPS = 100 # max. number of steps per episodes
+    self.MAX_STEPS = max_steps # max. number of steps per episodes
     self.num_steps = 0 # steps taken so far
     
     self.PROB_ACTION_SUCCESS = prob_action_success
@@ -220,7 +221,7 @@ class Hallway2(gym.Env):
         if s_prime >= 68:
             s_prime += 1
     elif action == 4: # turn around
-        if s > 68:
+        if s > 68: # account for single goal state
             s -= 1
         if s % 4 <= 1: # orientations are up or right
             s_prime = s + 2
